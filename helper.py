@@ -47,36 +47,6 @@ def plot_test(x,y,n):
     plt.show()
 
 
-def preprocess_2d(data,p):
-
-    df = data.dropna()
-    train_size = int(len(df)*p)
-
-    labels = np.ones((len(df),30))
-
-    for i in range(0,len(df)):
-        x = np.asarray(df.iloc[i].drop(["Image"]))
-        x = x.reshape([1,30])
-        x = (x -48)/48
-        labels[i] = labels[i]*x
-
-    inputs = np.ones((len(df),96,96,3))
-
-    for i in range(0, len(df)):
-        x = [int(j) for j in df.iloc[i][30].split(" ")]
-        x = np.asarray(x).reshape([96,96,1])
-        x = x / 255
-        x = np.stack((x)*3)
-        inputs[i] = inputs[i] * x
-
-    train_x = inputs[:train_size]
-    test_x = inputs[train_size:]
-
-    train_y = labels[:train_size]
-    test_y = labels[train_size:]
-
-    return (train_x,train_y,test_x,test_y)
-
 def preprocess_1d(data,test=False):
 
     df = data.dropna()
@@ -84,6 +54,26 @@ def preprocess_1d(data,test=False):
     df['Image'] = df['Image'].apply(lambda im: np.fromstring(im, sep=' '))
     x = np.vstack(df['Image'].values) / 255
     x = x.astype(np.float32)
+
+
+    if test == False:
+        y = df[df.columns[:-1]].values
+        y = (y-48)/48
+        y  = y.astype(np.float32)
+        x, y = shuffle(x, y, random_state=42)
+
+        return (x,y)
+
+    return (x)
+
+def preprocess_2d(data,test=False):
+
+    df = data.dropna()
+
+    df['Image'] = df['Image'].apply(lambda im: np.fromstring(im, sep=' '))
+    x = np.vstack(df['Image'].values) / 255
+    x = x.astype(np.float32)
+    x = x.reshape(-1, 96, 96, 1)
 
     if test == False:
         y = df[df.columns[:-1]].values
